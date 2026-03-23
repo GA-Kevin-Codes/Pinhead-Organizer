@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pinhead Commons Editor</title>
+    <meta
+      name="description"
+      content="A basic static tool for adding categories, depicts, and symbol of statements to Pinhead files on Wikimedia Commons."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main>
+      <h1>Pinhead Commons Editor</h1>
+      <p>
+        This page loads files from Commons that still need <code>depicts</code> and lets you add categories,
+        <code>depicts</code>, and <code>symbol of</code> directly.
+      </p>
+
+      <section>
+        <h2>Login</h2>
+        <p id="login-status">Not logged in.</p>
+        <p>
+          Login happens on Wikimedia's own site. This page never asks for your Wikimedia password.
+        </p>
+        <p id="oauth-config"></p>
+        <p>
+          <button id="login-button" type="button">Log in with Wikimedia</button>
+          <button id="logout-button" type="button">Log out</button>
+        </p>
+      </section>
+
+      <section>
+        <h2>Queue</h2>
+        <form id="queue-form">
+          <label for="queue-query">Commons search query</label>
+          <input id="queue-query" type="text" autocomplete="off" spellcheck="false">
+          <p>
+            <button type="submit">Reload queue</button>
+          </p>
+        </form>
+        <p id="queue-status">No queue loaded yet.</p>
+        <p>
+          <button id="previous-button" type="button">Previous</button>
+          <button id="next-button" type="button">Next</button>
+        </p>
+      </section>
+
+      <section>
+        <h2>Current file</h2>
+        <p id="file-position">No file loaded.</p>
+        <p><a id="file-link" href="#" target="_blank" rel="noreferrer">Open file page</a></p>
+        <img id="file-preview" alt="" hidden>
+
+        <h3>Categories on file</h3>
+        <ul id="current-categories"></ul>
+
+        <h3>Depicts on file</h3>
+        <ul id="current-depicts"></ul>
+
+        <h3>Symbol of on file</h3>
+        <ul id="current-symbols"></ul>
+      </section>
+
+      <section>
+        <h2>Add categories</h2>
+        <label for="search-term">Search term</label>
+        <input id="search-term" type="text" autocomplete="off" spellcheck="false">
+        <p>
+          <button id="search-button" type="button">Search again</button>
+        </p>
+        <ul id="category-results"></ul>
+        <label for="manual-category">Manual category name</label>
+        <input id="manual-category" type="text" autocomplete="off" spellcheck="false" placeholder="Category:SVG electrical symbols">
+        <p>
+          <button id="add-category-button" type="button">Add category</button>
+        </p>
+      </section>
+
+      <section>
+        <h2>Add structured data</h2>
+        <ul id="wikidata-results"></ul>
+        <label for="manual-qid">Manual QID</label>
+        <input id="manual-qid" type="text" autocomplete="off" spellcheck="false" placeholder="Q197">
+        <p>
+          <button id="add-depicts-button" type="button">Add as depicts</button>
+          <button id="add-symbol-button" type="button">Add as symbol of</button>
+        </p>
+      </section>
+
+      <section>
+        <h2>Status</h2>
+        <p id="status" aria-live="polite">Ready.</p>
+      </section>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
