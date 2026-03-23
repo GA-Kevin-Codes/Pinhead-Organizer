@@ -16,7 +16,6 @@ const AUTH_MESSAGE_KEY = "pinhead-basic-auth-message:v1";
 
 const els = {
   loginStatus: document.querySelector("#login-status"),
-  oauthConfig: document.querySelector("#oauth-config"),
   loginButton: document.querySelector("#login-button"),
   logoutButton: document.querySelector("#logout-button"),
   queueForm: document.querySelector("#queue-form"),
@@ -474,6 +473,7 @@ async function finishOauthCallbackIfNeeded() {
         client_id: pkce.clientId,
         redirect_uri: pkce.redirectUri,
         code_verifier: pkce.verifier,
+        code_challenge_method: "S256",
       }),
     });
 
@@ -556,7 +556,6 @@ async function validateAccessToken() {
 
 function renderLoginStatus() {
   const hasClientId = Boolean(OAUTH_CLIENT_ID.trim());
-  els.oauthConfig.textContent = `OAuth server: ${OAUTH_REST}. Redirect URI: ${getRedirectUri()}.`;
 
   if (state.auth.accessToken) {
     els.loginStatus.textContent = state.authScopes.length
