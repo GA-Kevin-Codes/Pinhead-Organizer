@@ -6,6 +6,8 @@ const WIKIDATA_WIKI = "https://www.wikidata.org/wiki/";
 const DEFAULT_QUERY = 'incategory:"Plain black Pinhead SVG icons" -haswbstatement:P180';
 // Public client ID only. Do not put the client secret in this file.
 const OAUTH_CLIENT_ID = "34ea963dd0b5585c37a81feb8dff8107";
+// Optional but recommended on GitHub Pages because Wikimedia checks redirect_uri exactly.
+const OAUTH_REDIRECT_URI = "";
 const SEARCH_LIMIT = 25;
 const SETTINGS_KEY = "pinhead-basic-settings:v1";
 const AUTH_KEY = "pinhead-basic-auth:v1";
@@ -42,6 +44,7 @@ const els = {
 const state = {
   settings: loadSettings(),
   auth: loadAuth(),
+  authScopes: [],
   authMessage: loadAuthMessage(),
   files: [],
   totalHits: 0,
@@ -62,6 +65,17 @@ async function initialize() {
   renderLoginStatus();
   bindEvents();
   await finishOauthCallbackIfNeeded();
+
+  if (state.auth.accessToken) {
+    try {
+      await validateAccessToken();
+      renderLoginStatus();
+    } catch (error) {
+      clearAuth();
+      state.authMessage = `Login failed: ${error.message}`;
+      renderLoginStatus();
+    }
+  }
 
   await reloadQueue();
 }
@@ -390,7 +404,7 @@ async function startOauthLogin() {
   const verifier = randomString(64);
   const stateValue = randomString(32);
   const challenge = await sha256Base64Url(verifier);
-  const redirectUri = currentPageUrl();
+  const redirectUri = getRedirectUri();
 
   localStorage.setItem(PKCE_KEY, JSON.stringify({
     verifier,
@@ -481,7 +495,7 @@ async function finishOauthCallbackIfNeeded() {
     state.authMessage = "";
     saveAuth();
     state.csrfToken = "";
-    await getCsrfToken();
+    await validateAccessToken();
     localStorage.removeItem(PKCE_KEY);
     history.replaceState({}, "", currentPageUrl());
     renderLoginStatus();
@@ -498,6 +512,7 @@ async function finishOauthCallbackIfNeeded() {
 
 function clearAuth() {
   state.auth = emptyAuth();
+  state.authScopes = [];
   state.csrfToken = "";
   saveAuth();
   renderLoginStatus();
@@ -523,11 +538,28 @@ async function getCsrfToken() {
   return token;
 }
 
+async function validateAccessToken() {
+  const response = await fetch(`${COMMONS_REST}/oauth2/resource/scopes`, {
+    headers: {
+      Authorization: `Bearer ${state.auth.accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`OAuth token validation failed with ${response.status}`);
+  }
+
+  const data = await response.json().catch(() => ({}));
+  state.authScopes = Array.isArray(data.scopes) ? data.scopes : [];
+}
+
 function renderLoginStatus() {
   const hasClientId = Boolean(OAUTH_CLIENT_ID.trim());
 
   if (state.auth.accessToken) {
-    els.loginStatus.textContent = "Logged in for this tab.";
+    els.loginStatus.textContent = state.authScopes.length
+      ? `Logged in for this tab. Granted scopes: ${state.authScopes.join(", ")}.`
+      : "Logged in for this tab.";
   } else if (state.authMessage) {
     els.loginStatus.textContent = state.authMessage;
   } else if (!hasClientId) {
@@ -811,6 +843,10 @@ function currentPageUrl() {
   return `${window.location.origin}${window.location.pathname}`;
 }
 
+function getRedirectUri() {
+  return OAUTH_REDIRECT_URI.trim() || currentPageUrl();
+}
+
 async function commonsGet(params, authenticated = false) {
   return actionGet(COMMONS_API, params, authenticated ? state.auth.accessToken : "");
 }
@@ -823,7 +859,7 @@ async function actionGet(baseUrl, params, accessToken = "") {
   const url = new URL(baseUrl);
   url.searchParams.set("format", "json");
   if (accessToken) {
-    url.searchParams.set("crossorigin", "1");
+    url.searchParams.set("crossorigin", "");
   } else {
     url.searchParams.set("origin", "*");
   }
@@ -847,11 +883,27 @@ async function actionGet(baseUrl, params, accessToken = "") {
 
 async function commonsPost(params, authenticated = false) {
   const url = new URL(COMMONS_API);
-  url.searchParams.set("format", "json");
   if (authenticated && state.auth.accessToken) {
-    url.searchParams.set("crossorigin", "1");
+    url.searchParams.set("crossorigin", "");
   } else {
     url.searchParams.set("origin", "*");
+  }
+
+  const body = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    if (key === "action" || key === "format" || key === "formatversion") {
+      url.searchParams.set(key, value);
+    } else {
+      body.append(key, value);
+    }
+  });
+
+  if (!url.searchParams.has("format")) {
+    url.searchParams.set("format", "json");
   }
 
   const headers = {
@@ -865,7 +917,7 @@ async function commonsPost(params, authenticated = false) {
   const response = await fetch(url.toString(), {
     method: "POST",
     headers,
-    body: new URLSearchParams(params),
+    body,
   });
 
   if (!response.ok) {
