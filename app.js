@@ -432,35 +432,48 @@ async function finishOauthCallbackIfNeeded() {
     return;
   }
 
-  const tokenResponse = await fetch(`${COMMONS_REST}/oauth2/access_token`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      client_id: pkce.clientId,
-      redirect_uri: pkce.redirectUri,
-      code_verifier: pkce.verifier,
-    }),
-  });
+  try {
+    const tokenResponse = await fetch(`${COMMONS_REST}/oauth2/access_token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        client_id: pkce.clientId,
+        redirect_uri: pkce.redirectUri,
+        code_verifier: pkce.verifier,
+      }),
+    });
 
-  if (!tokenResponse.ok) {
+    const tokenData = await tokenResponse.json().catch(() => ({}));
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      const message = tokenData.error_description || tokenData.message || tokenData.error || `OAuth token exchange failed with ${tokenResponse.status}`;
+      clearAuth();
+      history.replaceState({}, "", currentPageUrl());
+      sessionStorage.removeItem(PKCE_KEY);
+      setStatus(`Commons login failed: ${message}`);
+      return;
+    }
+
+    state.auth = {
+      accessToken: tokenData.access_token,
+      expiresAt: Date.now() + ((tokenData.expires_in || 0) * 1000),
+    };
+    saveAuth();
+    state.csrfToken = "";
+    await getCsrfToken();
+    sessionStorage.removeItem(PKCE_KEY);
     history.replaceState({}, "", currentPageUrl());
-    throw new Error(`OAuth token exchange failed with ${tokenResponse.status}`);
+    renderLoginStatus();
+    setStatus("Logged in to Commons.");
+  } catch (error) {
+    clearAuth();
+    history.replaceState({}, "", currentPageUrl());
+    sessionStorage.removeItem(PKCE_KEY);
+    setStatus(`Commons login failed: ${error.message}`);
   }
-
-  const tokenData = await tokenResponse.json();
-  state.auth = {
-    accessToken: tokenData.access_token || "",
-    expiresAt: Date.now() + ((tokenData.expires_in || 0) * 1000),
-  };
-  saveAuth();
-  sessionStorage.removeItem(PKCE_KEY);
-  history.replaceState({}, "", currentPageUrl());
-  renderLoginStatus();
-  setStatus("Logged in to Commons.");
 }
 
 function clearAuth() {
