@@ -1,0 +1,104 @@
+body {
+  margin: 40px auto;
+  max-width: 680px;
+  background: #fff;
+  color: #444;
+  font-family: serif;
+  line-height: 1.5;
+  font-size: 18px;
+  padding: 0 10px;
+}
+
+main {
+  padding: 0;
+}
+
+section {
+  margin: 32px 0;
+}
+
+h1,
+h2,
+h3,
+p,
+ul {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: #222;
+  line-height: 1.2;
+}
+
+label,
+input,
+button {
+  display: block;
+}
+
+input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 6px;
+  margin: 0 0 12px;
+  border: 1px solid #222;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+
+button {
+  display: inline-block;
+  margin: 0 8px 8px 0;
+  padding: 6px 10px;
+  border: 1px solid #222;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  cursor: pointer;
+}
+
+button[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+img {
+  max-width: 240px;
+  border: 1px solid #222;
+  margin: 0 0 16px;
+}
+
+.inline-actions {
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.inline-actions button {
+  display: inline-block;
+}
+
+a {
+  color: #222;
+}
+
+code {
+  color: #222;
+}
+
+@media (max-width: 640px) {
+  section {
+    margin: 24px 0;
+  }
+}
