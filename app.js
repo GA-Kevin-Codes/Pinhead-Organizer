@@ -474,7 +474,6 @@ async function finishOauthCallbackIfNeeded() {
         client_id: pkce.clientId,
         redirect_uri: pkce.redirectUri,
         code_verifier: pkce.verifier,
-        code_challenge_method: "S256",
       }),
     });
 
