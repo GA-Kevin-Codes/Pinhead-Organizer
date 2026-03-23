@@ -1,6 +1,6 @@
 const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
-const COMMONS_REST = "https://commons.wikimedia.org/w/rest.php";
 const COMMONS_WIKI = "https://commons.wikimedia.org/wiki/";
+const OAUTH_REST = "https://meta.wikimedia.org/w/rest.php";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const WIKIDATA_WIKI = "https://www.wikidata.org/wiki/";
 const DEFAULT_QUERY = 'incategory:"Plain black Pinhead SVG icons" -haswbstatement:P180';
@@ -413,7 +413,7 @@ async function startOauthLogin() {
     redirectUri,
   }));
 
-  const url = new URL(`${COMMONS_REST}/oauth2/authorize`);
+  const url = new URL(`${OAUTH_REST}/oauth2/authorize`);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
@@ -462,7 +462,7 @@ async function finishOauthCallbackIfNeeded() {
   }
 
   try {
-    const tokenResponse = await fetch(`${COMMONS_REST}/oauth2/access_token`, {
+    const tokenResponse = await fetch(`${OAUTH_REST}/oauth2/access_token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -473,6 +473,7 @@ async function finishOauthCallbackIfNeeded() {
         client_id: pkce.clientId,
         redirect_uri: pkce.redirectUri,
         code_verifier: pkce.verifier,
+        code_challenge_method: "S256",
       }),
     });
 
@@ -539,7 +540,7 @@ async function getCsrfToken() {
 }
 
 async function validateAccessToken() {
-  const response = await fetch(`${COMMONS_REST}/oauth2/resource/scopes`, {
+  const response = await fetch(`${OAUTH_REST}/oauth2/resource/scopes`, {
     headers: {
       Authorization: `Bearer ${state.auth.accessToken}`,
     },
